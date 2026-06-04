@@ -1,0 +1,52 @@
+---
+- name: Install and Configure Nginx
+  hosts: all
+  become: yes
+
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Start and Enable Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Copy AWS page
+      copy:
+        src: files/index-aws.html
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: '0644'
+      when: "'aws' in group_names"
+
+    - name: Copy Azure page
+      copy:
+        src: files/index-azure.html
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: '0644'
+      when: "'azure' in group_names"
+
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
+
+    - name: Gather service facts  
+      service_facts:
+
+    - name: Verify Nginx is running
+      debug:
+        msg: "Nginx is running"
+      when: ansible_facts.services['nginx.service'].state == 'running'
